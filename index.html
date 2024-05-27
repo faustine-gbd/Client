@@ -3,20 +3,21 @@
 <head>
   <title>Application de Bureau d'Accès à Distance</title>
   <link rel="stylesheet" type="text/css" href="style.css">
-  <script src="preload.js"></script>
-  <script src="renderer.js"></script>
+
 </head>
 <body>
   <h1>Connexion à Distance</h1>
   <div>
-    <p>ID du serveur : <span id="ID"></span></p>
-    <p>ID du partenaire : <input type="text" id="partnerIdInput"></p>
-    <button id="connectBtn">Connecter</button>
+    <p>ID du serveur : <span id="id"></span></p>
+    <p>ID du partenaire : <input type="text" id="partner-id-input"></p>
+    <button id="connect-btn">Connecter</button>
     <button id="disconnectBtn">Déconnecter</button>
   </div>
-
-  
+  Current value: <strong id="counter">0</strong>
+  Title: <input id="title"/>
+  <button id="btn" type="button">Set</button>
 </body>
+<script src="renderer.js"></script>
 </html>
 
 
