@@ -6,7 +6,7 @@ const WebSocket = require("ws");
 
 let mainWindow;
 let ws;
-let nomPC;
+let nomPc;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -60,11 +60,11 @@ app.whenReady().then(() => {
   }
 
   console.log("IP Address: ", ipAddress);
-  nomPC = os.hostname();
-  console.log("Nom de l'ordinateur:", nomPC);
+  nomPc = os.hostname();
+  console.log("Nom de l'ordinateur:", nomPc);
 
   // Envoyer une requête de demande d'identification au serveur
-  sendIdentificationRequest(nomPC);
+  sendIdentificationRequest(nomPc);
 });
 
 app.on("window-all-closed", () => {
@@ -73,7 +73,7 @@ app.on("window-all-closed", () => {
   }
 });
 
-function sendIdentificationRequest(nomPC) {
+function sendIdentificationRequest(nomPc) {
   const options = {
     hostname: "192.168.1.26",
     port: 8000,
@@ -95,7 +95,7 @@ function sendIdentificationRequest(nomPC) {
         ws = new WebSocket(`ws://192.168.1.26:8081`);
 
         ws.on("open", () => {
-          ws.send(JSON.stringify({ type: "register", nomPC }));
+          ws.send(JSON.stringify({ type: "register", nomPc }));
           console.log("Connexion WebSocket établie");
         });
 
@@ -120,7 +120,7 @@ function sendIdentificationRequest(nomPC) {
     console.error("Erreur lors de l'envoi de la demande:", err);
   });
 
-  req.write(JSON.stringify({ clientInfo: { nom_pc: nomPC } }));
+  req.write(JSON.stringify({ clientInfo: { nom_pc: nomPc } }));
   req.end();
 }
 
