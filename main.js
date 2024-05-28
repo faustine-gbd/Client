@@ -6,7 +6,7 @@ const WebSocket = require("ws");
 
 let mainWindow;
 let ws;
-
+let nomPC;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -60,7 +60,7 @@ app.whenReady().then(() => {
   }
 
   console.log("IP Address: ", ipAddress);
-  const nomPC = os.hostname();
+  nomPC = os.hostname();
   console.log("Nom de l'ordinateur:", nomPC);
 
   // Envoyer une requête de demande d'identification au serveur
@@ -95,7 +95,7 @@ function sendIdentificationRequest(nomPC) {
         ws = new WebSocket(`ws://192.168.1.26:8081`);
 
         ws.on("open", () => {
-          ws.send(JSON.stringify({ type: "register", randomId }));
+          ws.send(JSON.stringify({ type: "register", nomPC }));
           console.log("Connexion WebSocket établie");
         });
 
