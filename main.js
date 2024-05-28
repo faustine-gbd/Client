@@ -75,7 +75,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPC) {
   const options = {
-    hostname: "192.168.1.26",
+    hostname: "localhost",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -92,7 +92,7 @@ function sendIdentificationRequest(nomPC) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.26:8081`);
+        ws = new WebSocket(`ws://localhost:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", randomId }));
@@ -126,7 +126,7 @@ function sendIdentificationRequest(nomPC) {
 
 function sendConnectionRequest(partnerId) {
   const options = {
-    hostname: "192.168.1.26",
+    hostname: "localhost",
     port: 8000,
     path: "/connexion",
     method: "POST",
