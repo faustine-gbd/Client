@@ -62,10 +62,9 @@ app.whenReady().then(() => {
   console.log("IP Address: ", ipAddress);
   const nomPC = os.hostname();
   console.log("Nom de l'ordinateur:", nomPC);
-  console.log("Adresse IP:", ipAddress);
 
   // Envoyer une requête de demande d'identification au serveur
-  sendIdentificationRequest(nomPC, ipAddress);
+  sendIdentificationRequest(nomPC);
 });
 
 app.on("window-all-closed", () => {
@@ -74,9 +73,9 @@ app.on("window-all-closed", () => {
   }
 });
 
-function sendIdentificationRequest(nomPC, ipAddress) {
+function sendIdentificationRequest(nomPC) {
   const options = {
-    hostname: "192.168.1.27",
+    hostname: "192.168.1.26",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -89,15 +88,15 @@ function sendIdentificationRequest(nomPC, ipAddress) {
     if (res.statusCode === 200) {
       res.on("data", (chunk) => {
         const responseData = JSON.parse(chunk);
-        const ID = responseData.ID;
-        console.log("ID reçu du serveur:", ID);
-        mainWindow.webContents.send("set-id", ID);
+        const randomId = responseData.random_id;
+        console.log("ID reçu du serveur:", randomId);
+        mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.27:8081`);
+        ws = new WebSocket(`ws://192.168.1.26:8081`);
 
         ws.on("open", () => {
+          ws.send(JSON.stringify({ type: "register", randomId }));
           console.log("Connexion WebSocket établie");
-          ws.send(JSON.stringify({ type: "register", ID }));
         });
 
         ws.on("message", (message) => {
@@ -121,13 +120,13 @@ function sendIdentificationRequest(nomPC, ipAddress) {
     console.error("Erreur lors de l'envoi de la demande:", err);
   });
 
-  req.write(JSON.stringify({ clientInfo: { nomPc: nomPC, ipAddress } }));
+  req.write(JSON.stringify({ clientInfo: { nom_pc: nomPC } }));
   req.end();
 }
 
 function sendConnectionRequest(partnerId) {
   const options = {
-    hostname: "192.168.1.27",
+    hostname: "192.168.1.26",
     port: 8000,
     path: "/connexion",
     method: "POST",
@@ -151,6 +150,6 @@ function sendConnectionRequest(partnerId) {
     console.error("Erreur lors de l'envoi de la demande:", err);
   });
 
-  req.write(JSON.stringify({ ID: partnerId }));
+  req.write(JSON.stringify({ random_id: partnerId }));
   req.end();
 }
