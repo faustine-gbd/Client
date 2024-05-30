@@ -75,7 +75,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "192.168.1.25",
+    hostname: "localhost",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -92,7 +92,7 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.25:8081`);
+        ws = new WebSocket(`ws://localhost:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));
@@ -105,9 +105,14 @@ function sendIdentificationRequest(nomPc) {
             switch (data.type) {
               case "connexion-request-to-receiver":
                 const { receiverName, senderName } = data.data;
-                console.log("receiverName : ", receiverName, "senderName :", senderName)
-                if(receiverName === nomPc) {
-                  handleConnexionDialog()
+                console.log(
+                  "receiverName : ",
+                  receiverName,
+                  "senderName :",
+                  senderName
+                );
+                if (receiverName === nomPc) {
+                  handleConnexionDialog();
                 }
                 break;
               case "connectionResponse":
@@ -118,7 +123,7 @@ function sendIdentificationRequest(nomPc) {
                 // Gérer la demande de partage d'écran
                 handleScreenShareRequest(clientName, data.ID);
                 break;
-                // Ajoutez d'autres types de messages si nécessaire
+              // Ajoutez d'autres types de messages si nécessaire
               default:
                 console.error(`Type de message inconnu: ${data.type}`);
             }
@@ -149,14 +154,18 @@ function sendIdentificationRequest(nomPc) {
 }
 
 function sendConnectionRequest(receiverId) {
-  ws.send(JSON.stringify({ type: "connexion-request-from-sender",
-  data :{
-    receiverId,
-    senderName: nomPc
-  } }));
+  ws.send(
+    JSON.stringify({
+      type: "connexion-request-from-sender",
+      data: {
+        receiverId,
+        senderName: nomPc,
+      },
+    })
+  );
   console.log("Connexion WebSocket établie");
   /*const options = {
-    hostname: "192.168.1.25",
+    hostname: "localhost",
     port: 8000,
     path: "/connexion",
     method: "POST",
@@ -182,61 +191,66 @@ function sendConnectionRequest(receiverId) {
 }
 
 function handleConnexionDialog() {
-    // Afficher une boîte de dialogue pour l'utilisateur
-    dialog.showMessageBox(mainWindow, {
+  // Afficher une boîte de dialogue pour l'utilisateur
+  dialog
+    .showMessageBox(mainWindow, {
       type: "question",
       buttons: ["Accepter", "Refuser"],
       title: "Demande de connexion",
       message: "Voulez-vous accepter la demande de connexion ?",
-    }).then(result => {
+    })
+    .then((result) => {
       if (result.response === 0) {
         // L'utilisateur a accepté la demande de connexion
         startScreenSharing(parsedMessage.partnerId);
         ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));
       } else {
         // L'utilisateur a refusé la demande de connexion
-        ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
+        ws.send(
+          JSON.stringify({ type: "connectionResponse", accepted: false })
+        );
       }
     });
 }
 
 function startScreenSharing(partnerId) {
-  desktopCapturer.getSources({ types: ['screen'] }).then(async sources => {
+  desktopCapturer.getSources({ types: ["screen"] }).then(async (sources) => {
     for (const source of sources) {
-      if (source.name === 'Entire Screen' || source.name === 'Screen 1') {
+      if (source.name === "Entire Screen" || source.name === "Screen 1") {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
               mandatory: {
-                chromeMediaSource: 'desktop',
+                chromeMediaSource: "desktop",
                 chromeMediaSourceId: source.id,
                 minWidth: 1280,
                 maxWidth: 1280,
                 minHeight: 720,
                 maxHeight: 720,
-              }
-            }
+              },
+            },
           });
 
           peer = new Peer({
             initiator: true,
             trickle: false,
-            stream: stream
+            stream: stream,
           });
 
-          peer.on('signal', data => {
-            ws.send(JSON.stringify({ type: 'peerSignal', signal: data, partnerId }));
+          peer.on("signal", (data) => {
+            ws.send(
+              JSON.stringify({ type: "peerSignal", signal: data, partnerId })
+            );
           });
 
-          peer.on('error', err => console.error('Erreur WebRTC:', err));
+          peer.on("error", (err) => console.error("Erreur WebRTC:", err));
 
-          peer.on('connect', () => console.log('Connexion WebRTC établie'));
+          peer.on("connect", () => console.log("Connexion WebRTC établie"));
 
-          peer.on('close', () => console.log('Connexion WebRTC fermée'));
-
+          peer.on("close", () => console.log("Connexion WebRTC fermée"));
         } catch (e) {
-          console.error('Erreur lors de la capture d\'écran:', e);
+          console.error("Erreur lors de la capture d'écran:", e);
         }
         return;
       }
