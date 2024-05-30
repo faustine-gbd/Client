@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron/main");
+const { dialog } = require('electron')
 const os = require("os");
 const http = require("http");
 const path = require("path");
@@ -75,7 +76,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "192.168.1.25",
+    hostname: "192.168.1.24",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -92,7 +93,7 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.25:8081`);
+        ws = new WebSocket(`ws://192.168.1.24:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));
@@ -156,7 +157,7 @@ function sendConnectionRequest(receiverId) {
   } }));
   console.log("Connexion WebSocket établie");
   /*const options = {
-    hostname: "192.168.1.25",
+    hostname: "192.168.1.24",
     port: 8000,
     path: "/connexion",
     method: "POST",
@@ -183,6 +184,7 @@ function sendConnectionRequest(receiverId) {
 
 function handleConnexionDialog() {
     // Afficher une boîte de dialogue pour l'utilisateur
+
     dialog.showMessageBox(mainWindow, {
       type: "question",
       buttons: ["Accepter", "Refuser"],
@@ -190,12 +192,14 @@ function handleConnexionDialog() {
       message: "Voulez-vous accepter la demande de connexion ?",
     }).then(result => {
       if (result.response === 0) {
+        console.log("Refuse")
         // L'utilisateur a accepté la demande de connexion
-        startScreenSharing(parsedMessage.partnerId);
-        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));
+        /*startScreenSharing(parsedMessage.partnerId);
+        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));*/
       } else {
+        console.log("Accept")
         // L'utilisateur a refusé la demande de connexion
-        ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
+        //ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
       }
     });
 }
