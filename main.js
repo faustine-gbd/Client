@@ -153,3 +153,74 @@ function sendConnectionRequest(partnerId) {
   req.write(JSON.stringify({ random_id: partnerId }));
   req.end();
 }
+
+function handleServerMessage(message) {
+  const parsedMessage = JSON.parse(message);
+  if (parsedMessage.type === "connectionRequest") {
+    // Afficher une boîte de dialogue pour l'utilisateur
+    dialog.showMessageBox(mainWindow, {
+      type: "question",
+      buttons: ["Accepter", "Refuser"],
+      title: "Demande de connexion",
+      message: "Voulez-vous accepter la demande de connexion ?",
+    }).then(result => {
+      if (result.response === 0) {
+        // L'utilisateur a accepté la demande de connexion
+        startScreenSharing(parsedMessage.partnerId);
+        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));
+      } else {
+        // L'utilisateur a refusé la demande de connexion
+        ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
+      }
+    });
+  } else if (parsedMessage.type === "peerSignal") {
+    // Réception des signaux WebRTC du pair distant
+    if (peer) {
+      peer.signal(parsedMessage.signal);
+    }
+  }
+}
+
+function startScreenSharing(partnerId) {
+  desktopCapturer.getSources({ types: ['screen'] }).then(async sources => {
+    for (const source of sources) {
+      if (source.name === 'Entire Screen' || source.name === 'Screen 1') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              mandatory: {
+                chromeMediaSource: 'desktop',
+                chromeMediaSourceId: source.id,
+                minWidth: 1280,
+                maxWidth: 1280,
+                minHeight: 720,
+                maxHeight: 720,
+              }
+            }
+          });
+
+          peer = new Peer({
+            initiator: true,
+            trickle: false,
+            stream: stream
+          });
+
+          peer.on('signal', data => {
+            ws.send(JSON.stringify({ type: 'peerSignal', signal: data, partnerId }));
+          });
+
+          peer.on('error', err => console.error('Erreur WebRTC:', err));
+
+          peer.on('connect', () => console.log('Connexion WebRTC établie'));
+
+          peer.on('close', () => console.log('Connexion WebRTC fermée'));
+
+        } catch (e) {
+          console.error('Erreur lors de la capture d\'écran:', e);
+        }
+        return;
+      }
+    }
+  });
+}
