@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron/main");
-const { dialog } = require('electron')
+const { dialog, desktopCapturer } = require('electron')
 const os = require("os");
 const http = require("http");
 const path = require("path");
@@ -8,6 +8,7 @@ const WebSocket = require("ws");
 let mainWindow;
 let ws;
 let nomPc;
+let peerConnection;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -106,25 +107,29 @@ function sendIdentificationRequest(nomPc) {
             switch (data.type) {
               case "connexion-request-to-receiver":
                 const { receiverName, senderName } = data.data;
-                console.log(
-                  "receiverName : ",
-                  receiverName,
-                  "senderName :",
-                  senderName
-                );
-                if (receiverName === nomPc) {
-                  handleConnexionDialog();
+                console.log("receiverName : ", receiverName, "senderName :", senderName)
+                if(receiverName === nomPc) {
+                  handleConnexionDialog(senderName)
                 }
                 break;
               case "connectionResponse":
-                // Gérer la réponse du destinataire à la demande de connexion
-                handleConnectionResponse(data.initiateurName, data.accepted);
+                const { accepted, initiateurName } = data;
+                if (accepted) {
+                  startScreenSharing(initiateurName);
+                }
                 break;
-              case "screenShareRequest":
-                // Gérer la demande de partage d'écran
-                handleScreenShareRequest(clientName, data.ID);
+              case "screenShareOffer":
+                const { offer, senderName: sender } = data;
+                handleScreenShareOffer(offer, sender);
                 break;
-              // Ajoutez d'autres types de messages si nécessaire
+              case "screenShareAnswer":
+                const { answer } = data;
+                handleScreenShareAnswer(answer);
+                break;
+              case "iceCandidate":
+                const { candidate } = data;
+                handleIceCandidate(candidate);
+                break;
               default:
                 console.error(`Type de message inconnu: ${data.type}`);
             }
@@ -165,38 +170,14 @@ function sendConnectionRequest(receiverId) {
     })
   );
   console.log("Connexion WebSocket établie");
-  /*const options = {
-    hostname: "localhost",
-    port: 8000,
-    path: "/connexion",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-  const req = http.request(options, (res) => {
-    if (res.statusCode === 200) {
-      res.on("data", (chunk) => {
-        const responseData = JSON.parse(chunk);
-        console.log("Réponse du serveur:", responseData.message);
-      });
-    } else {
-      console.error("Erreur de connexion:", res.statusCode);
-    }
-  });
-  req.on("error", (err) => {
-    console.error("Erreur lors de l'envoi de la demande:", err);
-  });
-  req.write(JSON.stringify({ random_id: partnerId }));
-  req.end();*/
 }
 
-function handleConnexionDialog() {
-  // Afficher une boîte de dialogue pour l'utilisateur
-  dialog
-    .showMessageBox(mainWindow, {
+function handleConnexionDialog(senderName) {
+    // Afficher une boîte de dialogue pour l'utilisateur
+
+    dialog.showMessageBox(mainWindow, {
       type: "question",
-      buttons: ["Accepter", "Refuser"],
+      buttons: ["Refuser", "Accepter"],
       title: "Demande de connexion",
       message: "Voulez-vous accepter la demande de connexion ?",
     })
@@ -208,12 +189,150 @@ function handleConnexionDialog() {
         ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));*/
       } else {
         console.log("Accept")
+        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true, initiateurName: senderName }));
         // L'utilisateur a refusé la demande de connexion
         //ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
       }
     });
 }
 
+
+async function startScreenSharing(receiverName) {
+  peerConnection = new RTCPeerConnection();
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      ws.send(JSON.stringify({ type: "iceCandidate", candidate: event.candidate, receiverName }));
+    }
+  };
+
+  const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+  stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
+
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+
+  ws.send(JSON.stringify({ type: "screenShareOffer", offer, senderName: "client1" }));
+}
+
+async function handleScreenShareOffer(offer, senderName) {
+  peerConnection = new RTCPeerConnection();
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      ws.send(JSON.stringify({ type: "iceCandidate", candidate: event.candidate, receiverName: senderName }));
+    }
+  };
+
+  peerConnection.ontrack = (event) => {
+    const video = document.getElementById("remoteVideo");
+    video.srcObject = event.streams[0];
+  };
+
+  await peerConnection.setRemoteDescription(offer);
+
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+
+  ws.send(JSON.stringify({ type: "screenShareAnswer", answer, receiverName: senderName }));
+}
+
+async function handleScreenShareAnswer(answer) {
+  await peerConnection.setRemoteDescription(answer);
+}
+
+async function handleIceCandidate(candidate) {
+  await peerConnection.addIceCandidate(candidate);
+}
+
+/*
+// Fonction pour démarrer le partage d'écran
+async function startScreenSharing(receiverName) {
+  const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
+  const selectedSource = sources[0];
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      mandatory: {
+        chromeMediaSource: 'desktop',
+        chromeMediaSourceId: selectedSource.id,
+      },
+    },
+  });
+
+  peerConnection = new RTCPeerConnection();
+
+  stream.getTracks().forEach((track) => {
+    peerConnection.addTrack(track, stream);
+  });
+
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+
+  ws.send(JSON.stringify({
+    type: 'screenShareOffer',
+    offer: offer,
+    receiverName: receiverName,
+  }));
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      ws.send(JSON.stringify({
+        type: 'iceCandidate',
+        candidate: event.candidate,
+        receiverName: receiverName,
+      }));
+    }
+  };
+}
+
+// Fonction pour gérer l'offre de partage d'écran reçue
+async function handleScreenShareOffer(offer, senderName) {
+  peerConnection = new RTCPeerConnection();
+
+  peerConnection.ontrack = (event) => {
+    const remoteVideo = document.getElementById('remoteVideo');
+    remoteVideo.srcObject = event.streams[0];
+  };
+
+  await peerConnection.setRemoteDescription(offer);
+
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+
+  ws.send(JSON.stringify({
+    type: 'screenShareAnswer',
+    answer: answer,
+    senderName: senderName,
+  }));
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      ws.send(JSON.stringify({
+        type: 'iceCandidate',
+        candidate: event.candidate,
+        senderName: senderName,
+      }));
+    }
+  };
+}
+
+// Fonction pour gérer la réponse de partage d'écran reçue
+async function handleScreenShareAnswer(answer) {
+  await peerConnection.setRemoteDescription(answer);
+}
+
+// Fonction pour gérer les candidats ICE reçus
+async function handleIceCandidate(candidate) {
+  await peerConnection.addIceCandidate(candidate);
+}
+
+// IPC pour démarrer le partage d'écran
+ipcMain.on('start-screen-share', (event, receiverName) => {
+  startScreenSharing(receiverName);
+});*/
+/*
 function startScreenSharing(partnerId) {
   desktopCapturer.getSources({ types: ["screen"] }).then(async (sources) => {
     for (const source of sources) {
@@ -258,3 +377,4 @@ function startScreenSharing(partnerId) {
     }
   });
 }
+*/
