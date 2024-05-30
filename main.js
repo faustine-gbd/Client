@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron/main");
+const { dialog } = require('electron')
 const os = require("os");
 const http = require("http");
 const path = require("path");
@@ -201,14 +202,14 @@ function handleConnexionDialog() {
     })
     .then((result) => {
       if (result.response === 0) {
+        console.log("Refuse")
         // L'utilisateur a accepté la demande de connexion
-        startScreenSharing(parsedMessage.partnerId);
-        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));
+        /*startScreenSharing(parsedMessage.partnerId);
+        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));*/
       } else {
+        console.log("Accept")
         // L'utilisateur a refusé la demande de connexion
-        ws.send(
-          JSON.stringify({ type: "connectionResponse", accepted: false })
-        );
+        //ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
       }
     });
 }
