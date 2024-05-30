@@ -75,7 +75,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "localhost",
+    hostname: "192.168.1.25",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -92,7 +92,7 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://localhost:8081`);
+        ws = new WebSocket(`ws://192.168.1.25:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));
@@ -100,7 +100,31 @@ function sendIdentificationRequest(nomPc) {
         });
 
         ws.on("message", (message) => {
-          console.log("Message reçu du serveur:", message);
+          try {
+            const data = JSON.parse(message);
+            switch (data.type) {
+              case "connexion-request-to-receiver":
+                const { receiverName, senderName } = data.data;
+                console.log("receiverName : ", receiverName, "senderName :", senderName)
+                if(receiverName === nomPc) {
+                  handleConnexionDialog()
+                }
+                break;
+              case "connectionResponse":
+                // Gérer la réponse du destinataire à la demande de connexion
+                handleConnectionResponse(data.initiateurName, data.accepted);
+                break;
+              case "screenShareRequest":
+                // Gérer la demande de partage d'écran
+                handleScreenShareRequest(clientName, data.ID);
+                break;
+                // Ajoutez d'autres types de messages si nécessaire
+              default:
+                console.error(`Type de message inconnu: ${data.type}`);
+            }
+          } catch (error) {
+            console.error(`Erreur lors du traitement du message: ${error}`);
+          }
         });
 
         ws.on("close", () => {
@@ -124,9 +148,15 @@ function sendIdentificationRequest(nomPc) {
   req.end();
 }
 
-function sendConnectionRequest(partnerId) {
-  const options = {
-    hostname: "localhost",
+function sendConnectionRequest(receiverId) {
+  ws.send(JSON.stringify({ type: "connexion-request-from-sender",
+  data :{
+    receiverId,
+    senderName: nomPc
+  } }));
+  console.log("Connexion WebSocket établie");
+  /*const options = {
+    hostname: "192.168.1.25",
     port: 8000,
     path: "/connexion",
     method: "POST",
@@ -134,7 +164,6 @@ function sendConnectionRequest(partnerId) {
       "Content-Type": "application/json",
     },
   };
-
   const req = http.request(options, (res) => {
     if (res.statusCode === 200) {
       res.on("data", (chunk) => {
@@ -145,18 +174,14 @@ function sendConnectionRequest(partnerId) {
       console.error("Erreur de connexion:", res.statusCode);
     }
   });
-
   req.on("error", (err) => {
     console.error("Erreur lors de l'envoi de la demande:", err);
   });
-
   req.write(JSON.stringify({ random_id: partnerId }));
-  req.end();
+  req.end();*/
 }
 
-function handleServerMessage(message) {
-  const parsedMessage = JSON.parse(message);
-  if (parsedMessage.type === "connectionRequest") {
+function handleConnexionDialog() {
     // Afficher une boîte de dialogue pour l'utilisateur
     dialog.showMessageBox(mainWindow, {
       type: "question",
@@ -173,12 +198,6 @@ function handleServerMessage(message) {
         ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
       }
     });
-  } else if (parsedMessage.type === "peerSignal") {
-    // Réception des signaux WebRTC du pair distant
-    if (peer) {
-      peer.signal(parsedMessage.signal);
-    }
-  }
 }
 
 function startScreenSharing(partnerId) {
