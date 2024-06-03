@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron/main");
-const { dialog, desktopCapturer } = require('electron')
+const { dialog, desktopCapturer } = require("electron");
 const os = require("os");
 const http = require("http");
 const path = require("path");
@@ -28,7 +28,7 @@ function createWindow() {
     sendConnectionRequest(partnerId);
   });
 
-  mainWindow.loadFile("index.html");
+  mainWindow.loadFile(path.join(__dirname, "index.html"));
 }
 
 app.whenReady().then(() => {
@@ -104,39 +104,80 @@ function sendIdentificationRequest(nomPc) {
         ws.on("message", (message) => {
           try {
             const data = JSON.parse(message);
+
             switch (data.type) {
-              case "connexion-request-to-receiver":
-                const { receiverName, senderName } = data.data;
-                console.log("receiverName : ", receiverName, "senderName :", senderName)
-                if(receiverName === nomPc) {
-                  handleConnexionDialog(senderName)
-                }
+              case "offer":
+                peerConnection.setRemoteDescription(
+                  new RTCSessionDescription(message.data)
+                );
+                peerConnection.createAnswer().then((answer) => {
+                  peerConnection.setLocalDescription(answer);
+                  ws.send(JSON.stringify({ type: "answer", data: answer }));
+                });
                 break;
-              case "connectionResponse":
-                const { accepted, initiateurName } = data;
-                if (accepted) {
-                  startScreenSharing(initiateurName);
-                }
+              case "answer":
+                peerConnection.setRemoteDescription(
+                  new RTCSessionDescription(message.data)
+                );
                 break;
-              case "screenShareOffer":
-                const { offer, senderName: sender } = data;
-                handleScreenShareOffer(offer, sender);
+              case "ice-candidate":
+                peerConnection.addIceCandidate(
+                  new RTCIceCandidate(message.data)
+                );
                 break;
-              case "screenShareAnswer":
-                const { answer } = data;
-                handleScreenShareAnswer(answer);
+              case "control":
+                handleControl(message.data);
                 break;
-              case "iceCandidate":
-                const { candidate } = data;
-                handleIceCandidate(candidate);
-                break;
+
               default:
-                console.error(`Type de message inconnu: ${data.type}`);
+                console.log("Message type non reconnu:", message.type);
             }
           } catch (error) {
             console.error(`Erreur lors du traitement du message: ${error}`);
           }
         });
+
+        ipcMain.on("toggle-role", () => {
+          isController = !isController;
+          if (isController) {
+            createPeerConnection();
+          }
+        });
+
+        ipcMain.on("control", (event, data) => {
+          if (isController) {
+            ws.send(JSON.stringify({ type: "control", data: data }));
+          }
+        });
+
+        function createPeerConnection() {
+          peerConnection = new RTCPeerConnection();
+
+          peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+              ws.send(
+                JSON.stringify({ type: "ice-candidate", data: event.candidate })
+              );
+            }
+          };
+
+          peerConnection.createOffer().then((offer) => {
+            peerConnection.setLocalDescription(offer);
+            ws.send(JSON.stringify({ type: "offer", data: offer }));
+          });
+        }
+
+        function handleControl(data) {
+          if (!isController) {
+            if (data.type === "mousemove") {
+              robot.moveMouse(data.x, data.y);
+            } else if (data.type === "mouseclick") {
+              robot.mouseClick();
+            } else if (data.type === "keypress") {
+              robot.keyTap(data.key);
+            }
+          }
+        }
 
         ws.on("close", () => {
           console.log("Connexion WebSocket fermée");
@@ -173,9 +214,10 @@ function sendConnectionRequest(receiverId) {
 }
 
 function handleConnexionDialog(senderName) {
-    // Afficher une boîte de dialogue pour l'utilisateur
+  // Afficher une boîte de dialogue pour l'utilisateur
 
-    dialog.showMessageBox(mainWindow, {
+  dialog
+    .showMessageBox(mainWindow, {
       type: "question",
       buttons: ["Refuser", "Accepter"],
       title: "Demande de connexion",
@@ -183,26 +225,37 @@ function handleConnexionDialog(senderName) {
     })
     .then((result) => {
       if (result.response === 0) {
-        console.log("Refuse")
+        console.log("Refuse");
         // L'utilisateur a accepté la demande de connexion
         /*startScreenSharing(parsedMessage.partnerId);
         ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));*/
       } else {
-        console.log("Accept")
-        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true, initiateurName: senderName }));
+        console.log("Accept");
+        ws.send(
+          JSON.stringify({
+            type: "connectionResponse",
+            accepted: true,
+            initiateurName: senderName,
+          })
+        );
         // L'utilisateur a refusé la demande de connexion
         //ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
       }
     });
 }
 
-
 async function startScreenSharing(receiverName) {
   peerConnection = new RTCPeerConnection();
 
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
-      ws.send(JSON.stringify({ type: "iceCandidate", candidate: event.candidate, receiverName }));
+      ws.send(
+        JSON.stringify({
+          type: "iceCandidate",
+          candidate: event.candidate,
+          receiverName,
+        })
+      );
     }
   };
 
@@ -212,7 +265,9 @@ async function startScreenSharing(receiverName) {
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
 
-  ws.send(JSON.stringify({ type: "screenShareOffer", offer, senderName: "client1" }));
+  ws.send(
+    JSON.stringify({ type: "screenShareOffer", offer, senderName: "client1" })
+  );
 }
 
 async function handleScreenShareOffer(offer, senderName) {
@@ -220,7 +275,13 @@ async function handleScreenShareOffer(offer, senderName) {
 
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
-      ws.send(JSON.stringify({ type: "iceCandidate", candidate: event.candidate, receiverName: senderName }));
+      ws.send(
+        JSON.stringify({
+          type: "iceCandidate",
+          candidate: event.candidate,
+          receiverName: senderName,
+        })
+      );
     }
   };
 
@@ -234,7 +295,13 @@ async function handleScreenShareOffer(offer, senderName) {
   const answer = await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
 
-  ws.send(JSON.stringify({ type: "screenShareAnswer", answer, receiverName: senderName }));
+  ws.send(
+    JSON.stringify({
+      type: "screenShareAnswer",
+      answer,
+      receiverName: senderName,
+    })
+  );
 }
 
 async function handleScreenShareAnswer(answer) {
