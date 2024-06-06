@@ -3,8 +3,8 @@ const titleInput = document.getElementById("title");
 const connectButton = document.getElementById("connect-btn");
 const partnerIdInput = document.getElementById("partner-id-input");
 const counterElement = document.getElementById("counter");
-const { ipcRenderer } = require('electron');
-const robot = require('robotjs');
+//const { ipcRenderer } = require('electron');
+//const robot = require('robotjs');
 
 let peerConnection;
 let isController = false;
@@ -16,6 +16,7 @@ setButton.addEventListener("click", () => {
 
 connectButton.addEventListener("click", () => {
   const partnerId = partnerIdInput.value;
+  console.log("partnerId :", partnerId);
   window.sessionAPI.sendConnectionRequest(partnerId);
 });
 
@@ -23,7 +24,7 @@ window.sessionAPI.onSetId((value) => {
   counterElement.innerText = value;
   console.log("value: ", value);
 });
-
+/*
 document.getElementById('toggleRole').addEventListener('click', () => {
     isController = !isController;
     ipcRenderer.send('message', { type: 'toggle-role', data: isController });
@@ -31,7 +32,7 @@ document.getElementById('toggleRole').addEventListener('click', () => {
       createPeerConnection();
     }
   });
-  
+
   ipcRenderer.on('message', (event, data) => {
     if (data.type === 'offer') {
       peerConnection.setRemoteDescription(new RTCSessionDescription(data.data));
@@ -47,22 +48,22 @@ document.getElementById('toggleRole').addEventListener('click', () => {
       handleControl(data.data);
     }
   });
-  
+
   function createPeerConnection() {
     peerConnection = new RTCPeerConnection();
-  
+
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         ipcRenderer.send('message', { type: 'ice-candidate', data: event.candidate });
       }
     };
-  
+
     peerConnection.createOffer().then((offer) => {
       peerConnection.setLocalDescription(offer);
       ipcRenderer.send('message', { type: 'offer', data: offer });
     });
   }
-  
+
   function handleControl(data) {
     if (!isController) {
       if (data.type === 'mousemove') {
@@ -73,23 +74,23 @@ document.getElementById('toggleRole').addEventListener('click', () => {
         robot.keyTap(data.key);
       }
     }
-  }
-  
+  }*/
+
   // Capture mouse and keyboard events and send them as control messages
   // You'll need to implement this based on your specific requirements
-  
 
-/*const setButton = document.getElementById('btn'); 
+
+/*const setButton = document.getElementById('btn');
 const titleInput = document.getElementById('title');
- const connectButton = document.getElementById('connect-btn'); 
+ const connectButton = document.getElementById('connect-btn');
  const partnerIdInput = document.getElementById('partner-id-input');
-  const counterElement = document.getElementById('counter');  
-  setButton.addEventListener('click', () => {     
-    const title = titleInput.value;     
-    window.sessionAPI.setTitle(title); }); 
-     connectButton.addEventListener('click', () => {   
-          const partnerId = partnerIdInput.value;     
-          window.sessionAPI.sendConnectionRequest(partnerId); }); 
-           window.sessionAPI.onSetId((value) => {     
-            counterElement.innerText = value;     
+  const counterElement = document.getElementById('counter');
+  setButton.addEventListener('click', () => {
+    const title = titleInput.value;
+    window.sessionAPI.setTitle(title); });
+     connectButton.addEventListener('click', () => {
+          const partnerId = partnerIdInput.value;
+          window.sessionAPI.sendConnectionRequest(partnerId); });
+           window.sessionAPI.onSetId((value) => {
+            counterElement.innerText = value;
             console.log('value: ', value); });*/
