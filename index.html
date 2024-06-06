@@ -1,44 +1,111 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Application de Bureau d'Accès à Distance</title>
-  <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="acceuil.css">
+    <title>Acceuil</title>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <img src="./assets/images/iwaju.png" alt="Logo">
-      <h1>Connexion à Distance</h1>
-    </header>
-    <main>
-      <section class="identification">
-        <div class="server-id">
-          <i class="fas fa-desktop"></i>
-          <span>VOTRE ID : </span>
-          <strong id="counter"></strong>
-        <button id="btn" type="button"></button>
-        <button id="toggleRole">Toogle Role</button>
-          
+    <div class="main">
+        <div class="tete menu container d-block col-2">
+            <div>
+                <div>
+                    <a href="\" class="menu-item">
+                        <i class="bi bi-house-door-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
+                        <p class="mt-2">&nbsp;&nbsp;Accueil</p>    
+                    </a>
+                </div>
+                <div>
+                    <a href="\" class="menu-item">
+                        <i class="bi bi-send-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
+                        <p class="mt-2">&nbsp;&nbsp;Chat</p>    
+                    </a>
+                </div>
+                <div>
+                    <a href="\" class="menu-item">
+                        <i class="bi bi-clock-history" style="font-size: 1.5rem; color: whitesmoke;"></i>
+                        <p class="mt-2">&nbsp;&nbsp;Historiques</p>    
+                    </a>
+                </div>
+                <div>
+                    <a href="\" class="menu-item">
+                        <i class="bi bi-gear-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
+                        <p class="mt-2">&nbsp;&nbsp;Paramètres</p>    
+                    </a>
+                </div>
+            </div>
+            <br>
+            <br>
+            <br>
+            <br>
+            <div>
+                <a href="\" class="menu-item">
+                    <i class="bi bi-question-circle-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
+                    <p class="mt-2">&nbsp;&nbsp;Aide</p>    
+                </a>
+            </div>
         </div>
-      </section>
-      <section class="connection">
-        <div class="input-group">
-          <i class="fas fa-search"></i>
-          <input type="text" id="partner-id-input" placeholder="Entrez l'ID du partenaire">
+        <div class="corp container col-10">
+            <!-- Pour la page de ce côté -->
+            <div class="entete container col-11">
+                <div class="profil d-flex justify-content-between">
+                    <img src="img/image.png" alt="Image de profil">
+                    <p style="margin-top: 8px; font-size: large; font-weight: 500;">LUCY Flo</p>
+                </div>
+                <div class="actions d-flex align-items-center justify-content-between">
+                    <div class="recherche d-flex align-items-center">
+                        <a href="\"><i class="bi bi-search" style="font-size: 1.5rem; color: rgb(36, 0, 243);"></i></a>
+                        <input type="text" placeholder="Rechercher">
+                    </div>
+                    <i class="bi bi-bell"  style="font-size: 1.5rem; color: rgb(0, 68, 254);"></i>
+                    <button class="btn btn-primary ml-5">Déconnexion</button>
+                </div>
+            </div>
+            
+            <div>
+                <div class="identifiant container">
+                    <div class="container idmp">
+                        <i class="fas fa-desktop"></i>
+                        <p style="font-size: 20px; font-weight: 400;">
+                        <span>VOTRE ID : </span></p>
+                        <p style="font-size: 30px;"></p>
+                        <strong id="counter"></strong></p>
+                      <button id="btn" type="button"></button>
+                    </div>
+                    <!--<div class="container idmp">
+                        <p style="font-size: 20px; font-weight: 400;">Votre ID :</p>
+                        <p style="font-size: 30px;">878 954 667</p>
+                        <p style="font-size: 20px; font-weight: 400;">Mot de passe :</p>
+                        <p style="font-size: 30px;">*** *** ***</p>
+                    </div>-->
+                    <div class="image container mr-0">
+                        <img src="img/12982575_5116505.jpg" alt="" style="border-radius: 2rem; height: 250px; width: 500px;">
+                    </div>
+                </div>
+                <div class="reseau container">
+                    <p style="font-size: 26px; font-weight: 600;">Accédez à un pc distant :</p>
+                    <form class="col-md-4 center">
+                        <!-- Champ de saisie 1 -->
+                        <div class="form-group mb-3">
+                            <input type="text" id="partner-id-input" placeholder="Entrez l'ID du partenaire">
+                        </div>           
+                        <!-- Bouton de validation -->
+                        <button type="submit" class="btn btn-primary">Se connecter</button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary" id="connect-btn">Connecter</button>
-        <button class="btn btn-secondary" id="disconnectBtn">Déconnecter</button>
-      
-      </section>
+    </div>
 
-    </main>
-    <footer>
-      <p>&copy; IWAJU TECH</p>
-    </footer>
-  </div>
-  
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
-<script src="renderer.js"></script>
 </html>
-
-

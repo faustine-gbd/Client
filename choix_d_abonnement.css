@@ -1,0 +1,93 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #6084ec;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+h2 {
+    font-size: 2rem;
+    color: #ffffff;
+    font-weight: bolder;
+}
+
+h4 {
+    font-size: 1.5rem;
+    color: #ffffff;
+    font-weight: 120px; /* Cette ligne semble inutile, vous pouvez la supprimer */
+    font-size: xx-large; /* Vous avez déjà défini la taille de la police ci-dessus */
+}
+
+h1 {
+    font-size: 3rem;
+    color: #ffffff;
+    font-weight: bolder;
+}
+
+.bg-rose {
+    background-color: #FD6C9E;
+}
+
+.bg-primary {
+    background-color: #6084ec; /* Mise à jour de la couleur pour correspondre à votre arrière-plan */
+}
+
+.btn-outline-dark {
+    color: black;
+    font-weight: bolder;
+    font-size: 1rem;
+    background-color: white;
+    border: solid 2px rgb(174, 174, 174);
+    border-radius: 0.7rem;
+}
+
+.bg-rose,
+.bg-primary {
+    width: 27rem; /* Largeur fixe */
+    height: 29rem; /* Hauteur fixe */
+}
+
+.bg-rose p,
+.bg-primary p {
+    display: flex;
+    align-items: stretch;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: medium;
+}
+
+.bg-white {
+    justify-content: space-around; /* Espacement autour des éléments */
+}
+
+@media (min-width: 992px) {
+    .bg-rose,
+    .bg-primary {
+        margin: auto; /* Centrage horizontal */
+    }
+}
+
+@media (min-width: 992px) {
+    .bg-rose {
+        margin-right: 1rem; /* Espacement réduit sur les grands écrans */
+    }
+}
+
+.bg-rose .d-flex.justify-content-center .btn {
+    width: 92%; /* Largeur du bouton à 75% de la largeur du div rose */
+}
+
+.bg-rose .form-check-label {
+    color: white; /* Changer la couleur du texte en vert */
+    font-weight: 600;
+    font-size: medium;
+}
+
+.bg-rose .form-check-input {
+    border-radius: 50%; /* Rendre les cases à cocher rondes */
+}
+
+.bg-primary button {
+    width: 92%; /* Définir la largeur du bouton à 98% */
+}

@@ -28,7 +28,7 @@ function createWindow() {
     sendConnectionRequest(partnerId);
   });
 
-  mainWindow.loadFile(path.join(__dirname, "index.html"));
+  mainWindow.loadFile(path.join(__dirname, "inscription.html"));
 }
 
 app.whenReady().then(() => {
