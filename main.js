@@ -106,6 +106,18 @@ function sendIdentificationRequest(nomPc) {
             const data = JSON.parse(message);
 
             switch (data.type) {
+              case "connexion-request-to-receiver":
+                const { receiverName, senderName } = data.data;
+                console.log(
+                  "receiverName : ",
+                  receiverName,
+                  "senderName :",
+                  senderName
+                );
+                if (receiverName === nomPc) {
+                  handleConnexionDialog(senderName);
+                }
+                break;
               case "offer":
                 peerConnection.setRemoteDescription(
                   new RTCSessionDescription(message.data)
