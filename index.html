@@ -18,25 +18,25 @@
                 <div>
                     <a href="\" class="menu-item">
                         <i class="bi bi-house-door-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
-                        <p class="mt-2">&nbsp;&nbsp;Accueil</p>    
+                        <p class="mt-2">&nbsp;&nbsp;Accueil</p>
                     </a>
                 </div>
                 <div>
                     <a href="\" class="menu-item">
                         <i class="bi bi-send-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
-                        <p class="mt-2">&nbsp;&nbsp;Chat</p>    
+                        <p class="mt-2">&nbsp;&nbsp;Chat</p>
                     </a>
                 </div>
                 <div>
                     <a href="\" class="menu-item">
                         <i class="bi bi-clock-history" style="font-size: 1.5rem; color: whitesmoke;"></i>
-                        <p class="mt-2">&nbsp;&nbsp;Historiques</p>    
+                        <p class="mt-2">&nbsp;&nbsp;Historiques</p>
                     </a>
                 </div>
                 <div>
                     <a href="\" class="menu-item">
                         <i class="bi bi-gear-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
-                        <p class="mt-2">&nbsp;&nbsp;Paramètres</p>    
+                        <p class="mt-2">&nbsp;&nbsp;Paramètres</p>
                     </a>
                 </div>
             </div>
@@ -47,7 +47,7 @@
             <div>
                 <a href="\" class="menu-item">
                     <i class="bi bi-question-circle-fill" style="font-size: 1.5rem; color: whitesmoke;"></i>
-                    <p class="mt-2">&nbsp;&nbsp;Aide</p>    
+                    <p class="mt-2">&nbsp;&nbsp;Aide</p>
                 </a>
             </div>
         </div>
@@ -67,8 +67,11 @@
                     <button class="btn btn-primary ml-5">Déconnexion</button>
                 </div>
             </div>
-            
-            <div>
+            <div id="connexion-request-response-container">
+                <p id="connexion-request-response-text"></p>
+                <button class="btn btn-primary" style="visibility: hidden" id="control-btn">Prendre le contrôle</button>
+            </div>
+            <div id="connexion-request-container">
                 <div class="identifiant container">
                     <div class="container idmp">
                         <i class="fas fa-desktop"></i>
@@ -90,20 +93,23 @@
                 </div>
                 <div class="reseau container">
                     <p style="font-size: 26px; font-weight: 600;">Accédez à un pc distant :</p>
-                    <form class="col-md-4 center">
+                    <div class="col-md-4 center">
                         <!-- Champ de saisie 1 -->
                         <div class="form-group mb-3">
                             <input type="text" id="partner-id-input" placeholder="Entrez l'ID du partenaire">
-                        </div>           
+                        </div>
+
+
                         <!-- Bouton de validation -->
-                        <button type="submit" class="btn btn-primary">Se connecter</button>
-                    </form>
+                        <button class="btn btn-primary" id="connect-btn">Se connecter</button>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 
-
+    <script src="renderer.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

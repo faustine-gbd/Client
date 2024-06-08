@@ -28,7 +28,7 @@ function createWindow() {
     sendConnectionRequest(partnerId);
   });
 
-  mainWindow.loadFile(path.join(__dirname, "inscription.html"));
+  mainWindow.loadFile(path.join(__dirname, "index.html"));
 }
 
 app.whenReady().then(() => {
@@ -50,7 +50,7 @@ app.whenReady().then(() => {
   let ipAddress = "";
   if (wiFiInterface) {
     const matchingInterface = wiFiInterface.find(
-      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.27"
+      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.31"
     );
     if (matchingInterface) {
       ipAddress = matchingInterface.address;
@@ -77,7 +77,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "192.168.1.27",
+    hostname: "192.168.1.31",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -94,7 +94,7 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.27:8081`);
+        ws = new WebSocket(`ws://192.168.1.31:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));
@@ -108,15 +108,12 @@ function sendIdentificationRequest(nomPc) {
             switch (data.type) {
               case "connexion-request-to-receiver":
                 const { receiverName, senderName } = data.data;
-                console.log(
-                  "receiverName : ",
-                  receiverName,
-                  "senderName :",
-                  senderName
-                );
                 if (receiverName === nomPc) {
-                  handleConnexionDialog(senderName);
+                  handleConnexionDialog(receiverName, senderName);
                 }
+                break;
+              case "connexion-request-response-to-client":
+                handleConnexionRequestResponse(data.data)
                 break;
               case "offer":
                 peerConnection.setRemoteDescription(
@@ -225,35 +222,38 @@ function sendConnectionRequest(receiverId) {
   console.log("Connexion WebSocket établie");
 }
 
-function handleConnexionDialog(senderName) {
+function handleConnexionDialog(receiverName, senderName) {
   // Afficher une boîte de dialogue pour l'utilisateur
-
-  dialog
-    .showMessageBox(mainWindow, {
+  dialog.showMessageBox(mainWindow, {
       type: "question",
       buttons: ["Refuser", "Accepter"],
       title: "Demande de connexion",
       message: "Voulez-vous accepter la demande de connexion ?",
-    })
-    .then((result) => {
+    }).then((result) => {
       if (result.response === 0) {
-        console.log("Refuse");
-        // L'utilisateur a accepté la demande de connexion
-        /*startScreenSharing(parsedMessage.partnerId);
-        ws.send(JSON.stringify({ type: "connectionResponse", accepted: true }));*/
+        ws.send(
+            JSON.stringify({
+              type: "connexion-request-response",
+              data: {receiverName, senderName, requestAccepted : false},
+            })
+        );
       } else {
-        console.log("Accept");
         ws.send(
           JSON.stringify({
-            type: "connectionResponse",
-            accepted: true,
-            initiateurName: senderName,
+            type: "connexion-request-response",
+            data: {receiverName, senderName, requestAccepted : true},
           })
         );
-        // L'utilisateur a refusé la demande de connexion
-        //ws.send(JSON.stringify({ type: "connectionResponse", accepted: false }));
       }
     });
+}
+
+function handleConnexionRequestResponse(data){
+  const { receiverName, senderName, requestAccepted } = data;
+  console.log({ receiverName, senderName, requestAccepted } )
+  if (receiverName === nomPc || senderName === nomPc ) {
+    mainWindow.webContents.send("request-accepted", Boolean(requestAccepted));
+  }
 }
 
 async function startScreenSharing(receiverName) {

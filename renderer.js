@@ -3,6 +3,10 @@ const titleInput = document.getElementById("title");
 const connectButton = document.getElementById("connect-btn");
 const partnerIdInput = document.getElementById("partner-id-input");
 const counterElement = document.getElementById("counter");
+const connexionRequestContainerElement = document.getElementById("connexion-request-container");
+const connexionRequestResponseContainerElement = document.getElementById("connexion-request-response-container");
+const connexionRequestResponseTextElement = document.getElementById("connexion-request-response-text");
+const controlButton = document.getElementById("control-btn");
 //const { ipcRenderer } = require('electron');
 //const robot = require('robotjs');
 
@@ -21,9 +25,20 @@ connectButton.addEventListener("click", () => {
 });
 
 window.sessionAPI.onSetId((value) => {
+  console.log("onSetId: ", value);
   counterElement.innerText = value;
-  console.log("value: ", value);
+  console.log("onSetId 1: ", value);
 });
+
+window.sessionAPI.onConnexionRequestResponse((value) => {
+  if(value) {
+    connexionRequestContainerElement.style.display = "none"
+    connexionRequestResponseTextElement.innerText = "Connexion établie avec succès!"
+    controlButton.style.visibility = "visible"
+  } else  {
+    connexionRequestResponseTextElement.innerText = "Echèc de l'établissement de la connexion : accès refusé!"
+  }
+})
 /*
 document.getElementById('toggleRole').addEventListener('click', () => {
     isController = !isController;
