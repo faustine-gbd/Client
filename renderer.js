@@ -39,6 +39,8 @@ window.sessionAPI.onConnexionRequestResponse((value) => {
     connexionRequestResponseTextElement.innerText = "Echèc de l'établissement de la connexion : accès refusé!"
   }
 })
+
+
 /*
 document.getElementById('toggleRole').addEventListener('click', () => {
     isController = !isController;
