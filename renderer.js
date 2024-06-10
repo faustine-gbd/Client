@@ -7,8 +7,6 @@ const connexionRequestContainerElement = document.getElementById("connexion-requ
 const connexionRequestResponseContainerElement = document.getElementById("connexion-request-response-container");
 const connexionRequestResponseTextElement = document.getElementById("connexion-request-response-text");
 const controlButton = document.getElementById("control-btn");
-//const { ipcRenderer } = require('electron');
-//const robot = require('robotjs');
 
 let peerConnection;
 let isController = false;
@@ -22,6 +20,10 @@ connectButton.addEventListener("click", () => {
   const partnerId = partnerIdInput.value;
   console.log("partnerId :", partnerId);
   window.sessionAPI.sendConnectionRequest(partnerId);
+});
+
+controlButton.addEventListener('click', () => {
+    createPeerConnection();
 });
 
 window.sessionAPI.onSetId((value) => {
@@ -39,6 +41,79 @@ window.sessionAPI.onConnexionRequestResponse((value) => {
     connexionRequestResponseTextElement.innerText = "Echèc de l'établissement de la connexion : accès refusé!"
   }
 })
+
+function createPeerConnection() {
+  peerConnection = new RTCPeerConnection();
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      window.sessionAPI.sendIceCandidate(event.candidate);
+    }
+  };
+
+  peerConnection.createOffer().then((offer) => {
+    peerConnection.setLocalDescription(offer);
+    window.sessionAPI.sendOffer(offer);
+  });
+}
+
+function handleControl(data) {
+  if (!isController) {
+    if (data.type === 'mousemove') {
+      window.robot.moveMouse(data.x, data.y);
+    } else if (data.type === 'mouseclick') {
+      window.robot.mouseClick();
+    } else if (data.type === 'keypress') {
+      window.robot.keyTap(data.key);
+    }
+  }
+}
+
+// Capture mouse and keyboard events and send them as control messages
+document.addEventListener('mousemove', (event) => {
+  if (isController) {
+    window.sessionAPI.sendControl({
+      type: 'mousemove',
+      x: event.clientX,
+      y: event.clientY
+    });
+  }
+});
+
+document.addEventListener('click', () => {
+  if (isController) {
+    window.sessionAPI.sendControl({
+      type: 'mouseclick'
+    });
+  }
+});
+
+
+document.addEventListener('keydown', (event) => {
+  if (isController) {
+    window.sessionAPI.sendControl({
+      type: 'keypress',
+      key: event.key
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*

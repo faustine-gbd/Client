@@ -8,7 +8,7 @@ const WebSocket = require("ws");
 let mainWindow;
 let ws;
 let nomPc;
-let peerConnection;
+//let peerConnection;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -50,7 +50,7 @@ app.whenReady().then(() => {
   let ipAddress = "";
   if (wiFiInterface) {
     const matchingInterface = wiFiInterface.find(
-      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.31"
+      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.28"
     );
     if (matchingInterface) {
       ipAddress = matchingInterface.address;
@@ -77,7 +77,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "192.168.1.31",
+    hostname: "192.168.1.28",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -94,12 +94,13 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.31:8081`);
+        ws = new WebSocket(`ws://192.168.1.28:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));
           console.log("Connexion WebSocket établie");
         });
+
 
         ws.on("message", (message) => {
           try {
@@ -116,28 +117,21 @@ function sendIdentificationRequest(nomPc) {
                 handleConnexionRequestResponse(data.data)
                 break;
               case "offer":
-                peerConnection.setRemoteDescription(
-                  new RTCSessionDescription(message.data)
-                );
-                peerConnection.createAnswer().then((answer) => {
-                  peerConnection.setLocalDescription(answer);
-                  ws.send(JSON.stringify({ type: "answer", data: answer }));
-                });
+                console.log("ws offer")
+                mainWindow.webContents.send('offer', data);
                 break;
               case "answer":
-                peerConnection.setRemoteDescription(
-                  new RTCSessionDescription(message.data)
-                );
+                console.log("ws answer")
+                mainWindow.webContents.send('answer', data);
                 break;
               case "ice-candidate":
-                peerConnection.addIceCandidate(
-                  new RTCIceCandidate(message.data)
-                );
+                console.log("ws ice-candidate")
+                mainWindow.webContents.send('ice-candidate', data);
                 break;
               case "control":
-                handleControl(message.data);
+                console.log("ws control")
+                mainWindow.webContents.send('control', data);
                 break;
-
               default:
                 console.log("Message type non reconnu:", message.type);
             }
@@ -145,48 +139,6 @@ function sendIdentificationRequest(nomPc) {
             console.error(`Erreur lors du traitement du message: ${error}`);
           }
         });
-
-        ipcMain.on("toggle-role", () => {
-          isController = !isController;
-          if (isController) {
-            createPeerConnection();
-          }
-        });
-
-        ipcMain.on("control", (event, data) => {
-          if (isController) {
-            ws.send(JSON.stringify({ type: "control", data: data }));
-          }
-        });
-
-        function createPeerConnection() {
-          peerConnection = new RTCPeerConnection();
-
-          peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-              ws.send(
-                JSON.stringify({ type: "ice-candidate", data: event.candidate })
-              );
-            }
-          };
-
-          peerConnection.createOffer().then((offer) => {
-            peerConnection.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "offer", data: offer }));
-          });
-        }
-
-        function handleControl(data) {
-          if (!isController) {
-            if (data.type === "mousemove") {
-              robot.moveMouse(data.x, data.y);
-            } else if (data.type === "mouseclick") {
-              robot.mouseClick();
-            } else if (data.type === "keypress") {
-              robot.keyTap(data.key);
-            }
-          }
-        }
 
         ws.on("close", () => {
           console.log("Connexion WebSocket fermée");
@@ -208,6 +160,26 @@ function sendIdentificationRequest(nomPc) {
   req.write(JSON.stringify({ clientInfo: { nom_pc: nomPc } }));
   req.end();
 }
+
+ipcMain.on('offer', (event, data) => {
+  console.log("ipcMain.on offer")
+  ws.send(JSON.stringify({ type: 'offer', data: data }));
+});
+
+ipcMain.on('answer', (event, data) => {
+  console.log("ipcMain.on answer")
+  ws.send(JSON.stringify({ type: 'answer', data: data }));
+});
+
+ipcMain.on('ice-candidate', (event, data) => {
+  console.log("ipcMain.on ice-candidate")
+  ws.send(JSON.stringify({ type: 'ice-candidate', data: data }));
+});
+
+ipcMain.on('control', (event, data) => {
+  console.log("ipcMain.on control")
+  ws.send(JSON.stringify({ type: 'control', data: data }));
+});
 
 function sendConnectionRequest(receiverId) {
   ws.send(
@@ -324,136 +296,3 @@ async function handleIceCandidate(candidate) {
   await peerConnection.addIceCandidate(candidate);
 }
 
-/*
-// Fonction pour démarrer le partage d'écran
-async function startScreenSharing(receiverName) {
-  const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] });
-  const selectedSource = sources[0];
-
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: {
-      mandatory: {
-        chromeMediaSource: 'desktop',
-        chromeMediaSourceId: selectedSource.id,
-      },
-    },
-  });
-
-  peerConnection = new RTCPeerConnection();
-
-  stream.getTracks().forEach((track) => {
-    peerConnection.addTrack(track, stream);
-  });
-
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-
-  ws.send(JSON.stringify({
-    type: 'screenShareOffer',
-    offer: offer,
-    receiverName: receiverName,
-  }));
-
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      ws.send(JSON.stringify({
-        type: 'iceCandidate',
-        candidate: event.candidate,
-        receiverName: receiverName,
-      }));
-    }
-  };
-}
-
-// Fonction pour gérer l'offre de partage d'écran reçue
-async function handleScreenShareOffer(offer, senderName) {
-  peerConnection = new RTCPeerConnection();
-
-  peerConnection.ontrack = (event) => {
-    const remoteVideo = document.getElementById('remoteVideo');
-    remoteVideo.srcObject = event.streams[0];
-  };
-
-  await peerConnection.setRemoteDescription(offer);
-
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-
-  ws.send(JSON.stringify({
-    type: 'screenShareAnswer',
-    answer: answer,
-    senderName: senderName,
-  }));
-
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      ws.send(JSON.stringify({
-        type: 'iceCandidate',
-        candidate: event.candidate,
-        senderName: senderName,
-      }));
-    }
-  };
-}
-
-// Fonction pour gérer la réponse de partage d'écran reçue
-async function handleScreenShareAnswer(answer) {
-  await peerConnection.setRemoteDescription(answer);
-}
-
-// Fonction pour gérer les candidats ICE reçus
-async function handleIceCandidate(candidate) {
-  await peerConnection.addIceCandidate(candidate);
-}
-
-// IPC pour démarrer le partage d'écran
-ipcMain.on('start-screen-share', (event, receiverName) => {
-  startScreenSharing(receiverName);
-});*/
-/*
-function startScreenSharing(partnerId) {
-  desktopCapturer.getSources({ types: ["screen"] }).then(async (sources) => {
-    for (const source of sources) {
-      if (source.name === "Entire Screen" || source.name === "Screen 1") {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: {
-              mandatory: {
-                chromeMediaSource: "desktop",
-                chromeMediaSourceId: source.id,
-                minWidth: 1280,
-                maxWidth: 1280,
-                minHeight: 720,
-                maxHeight: 720,
-              },
-            },
-          });
-
-          peer = new Peer({
-            initiator: true,
-            trickle: false,
-            stream: stream,
-          });
-
-          peer.on("signal", (data) => {
-            ws.send(
-              JSON.stringify({ type: "peerSignal", signal: data, partnerId })
-            );
-          });
-
-          peer.on("error", (err) => console.error("Erreur WebRTC:", err));
-
-          peer.on("connect", () => console.log("Connexion WebRTC établie"));
-
-          peer.on("close", () => console.log("Connexion WebRTC fermée"));
-        } catch (e) {
-          console.error("Erreur lors de la capture d'écran:", e);
-        }
-        return;
-      }
-    }
-  });
-}
-*/
