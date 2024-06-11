@@ -50,7 +50,7 @@ app.whenReady().then(() => {
   let ipAddress = "";
   if (wiFiInterface) {
     const matchingInterface = wiFiInterface.find(
-      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.28"
+      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.27"
     );
     if (matchingInterface) {
       ipAddress = matchingInterface.address;
@@ -77,7 +77,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "192.168.1.28",
+    hostname: "192.168.1.27",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -94,18 +94,15 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.28:8081`);
+        ws = new WebSocket(`ws://192.168.1.27:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));
           console.log("Connexion WebSocket établie");
         });
-
-
         ws.on("message", (message) => {
           try {
             const data = JSON.parse(message);
-
             switch (data.type) {
               case "connexion-request-to-receiver":
                 const { receiverName, senderName } = data.data;
@@ -117,19 +114,19 @@ function sendIdentificationRequest(nomPc) {
                 handleConnexionRequestResponse(data.data)
                 break;
               case "offer":
-                console.log("ws offer")
+                console.log("ws offer");
                 mainWindow.webContents.send('offer', data);
                 break;
               case "answer":
-                console.log("ws answer")
+                console.log("ws answer");
                 mainWindow.webContents.send('answer', data);
                 break;
               case "ice-candidate":
-                console.log("ws ice-candidate")
+                console.log("ws ice-candidate");
                 mainWindow.webContents.send('ice-candidate', data);
                 break;
               case "control":
-                console.log("ws control")
+                console.log("ws control");
                 mainWindow.webContents.send('control', data);
                 break;
               default:
@@ -202,6 +199,7 @@ function handleConnexionDialog(receiverName, senderName) {
       title: "Demande de connexion",
       message: "Voulez-vous accepter la demande de connexion ?",
     }).then((result) => {
+      console.log("result : ", result)
       if (result.response === 0) {
         ws.send(
             JSON.stringify({
@@ -224,6 +222,7 @@ function handleConnexionRequestResponse(data){
   const { receiverName, senderName, requestAccepted } = data;
   console.log({ receiverName, senderName, requestAccepted } )
   if (receiverName === nomPc || senderName === nomPc ) {
+    console.log("yes")
     mainWindow.webContents.send("request-accepted", Boolean(requestAccepted));
   }
 }

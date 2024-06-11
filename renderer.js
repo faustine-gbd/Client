@@ -33,6 +33,7 @@ window.sessionAPI.onSetId((value) => {
 });
 
 window.sessionAPI.onConnexionRequestResponse((value) => {
+  console.log("value")
   if(value) {
     connexionRequestContainerElement.style.display = "none"
     connexionRequestResponseTextElement.innerText = "Connexion établie avec succès!"
@@ -87,7 +88,6 @@ document.addEventListener('click', () => {
     });
   }
 });
-
 
 document.addEventListener('keydown', (event) => {
   if (isController) {

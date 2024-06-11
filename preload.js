@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer')
-const robot = require('robotjs');
+//const robot = require('robotjs');
 contextBridge.exposeInMainWorld('sessionAPI', {
     setTitle: (title) => ipcRenderer.send('set-title', title),
     sendConnectionRequest: (partnerId) => ipcRenderer.send("send-partner-id", partnerId),
@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('sessionAPI', {
 */
 
     sendOffer: (offer) => {
-        console.log("send offer")
+        console.log("send offer");
         ipcRenderer.send('offer', offer);
     },
     onOfferReceived: (callback) => {
@@ -23,11 +23,11 @@ contextBridge.exposeInMainWorld('sessionAPI', {
         });
     },
     sendAnswer: (answer) => {
-        console.log("send answer")
+        console.log("send answer");
         ipcRenderer.send('answer', answer);
     },
     onAnswerReceived: (callback) => {
-        console.log("receive answer")
+        console.log("receive answer");
         ipcRenderer.on('answer', (event, answer) => {
             callback(answer);
         });
@@ -74,12 +74,15 @@ contextBridge.exposeInMainWorld('sessionAPI', {
 
 contextBridge.exposeInMainWorld('robot', {
     moveMouse: (x, y) => {
-        robot.moveMouse(x, y);
+        console.log("moveMouse : ",x, y )
+        //robot.moveMouse(x, y);
     },
     mouseClick: () => {
-        robot.mouseClick();
+        console.log("mouseClick : " )
+        //robot.mouseClick();
     },
     keyTap: (key) => {
-        robot.keyTap(key);
+        console.log("keyTap : ",key )
+        //robot.keyTap(key);
     }
 });
