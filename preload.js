@@ -6,12 +6,6 @@ contextBridge.exposeInMainWorld('sessionAPI', {
     onSetId: (callback) => ipcRenderer.on('set-id', (_event, value) => callback(value)),
     onConnexionRequestResponse: (callback) => ipcRenderer.on('request-accepted', (_event, value) => callback(value)),
 
-/*
-    sendIceCandidate: (candidate) => ipcRenderer.send("ice-candidate", candidate),
-    sendAnswer: (answer) => ipcRenderer.send("answer", answer),
-    sendOffer: (offer) => ipcRenderer.send("offer", offer),
-*/
-
     sendOffer: (offer) => {
         console.log("send offer");
         ipcRenderer.send('offer', offer);
@@ -52,9 +46,9 @@ contextBridge.exposeInMainWorld('sessionAPI', {
             callback(data);
         });
     },
-    /*
-    sendConnexionRequest: (data) => {
-        ipcRenderer.send('connexion-request-to-server', data);
+
+    sendConnexionRequest: (partnerId) => {
+        ipcRenderer.send('connexion-request-to-server', partnerId);
     },
     onConnexionRequestReceived: (callback) => {
         ipcRenderer.on('connexion-request-to-client', (event, data) => {
@@ -68,7 +62,7 @@ contextBridge.exposeInMainWorld('sessionAPI', {
         ipcRenderer.on('connexion-request-response-to-client', (event, data) => {
             callback(data);
         });
-    }*/
+    }
 })
 
 

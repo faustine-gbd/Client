@@ -33,7 +33,6 @@ window.sessionAPI.onSetId((value) => {
 });
 
 window.sessionAPI.onConnexionRequestResponse((value) => {
-  console.log("value")
   if(value) {
     connexionRequestContainerElement.style.display = "none"
     connexionRequestResponseTextElement.innerText = "Connexion établie avec succès!"
