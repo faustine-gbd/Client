@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron/main");
+const { app, BrowserWindow, ipcMain, session } = require("electron/main");
 const { dialog, desktopCapturer } = require("electron");
 const os = require("os");
 const http = require("http");
@@ -17,6 +17,10 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"), // Préchargement du script pour l'exposition d'objets
     },
   });
+
+
+
+
 
   ipcMain.on("set-title", (event, title) => {
     const webContents = event.sender;
@@ -106,6 +110,15 @@ function sendIdentificationRequest(nomPc) {
             switch (data.type) {
               case "connexion-request-to-receiver":
                 const { receiverName, senderName } = data.data;
+                session.defaultSession.cookies.set({
+                  url: 'http://localhost',
+                  name: 'session',
+                  value: JSON.stringify({ receiverName, senderName }) ,
+                }).then(() => {
+                  console.log('Cookie enregistré avec succès');
+                }).catch((error) => {
+                  console.error("Erreur lors de l'enregistrement du cookie:", error);
+                });
                 if (receiverName === nomPc) {
                   handleConnexionDialog(receiverName, senderName);
                 }
@@ -158,9 +171,18 @@ function sendIdentificationRequest(nomPc) {
   req.end();
 }
 
-ipcMain.on('offer', (event, data) => {
-  console.log("ipcMain.on offer")
-  ws.send(JSON.stringify({ type: 'offer', data: data }));
+ipcMain.on('offer', async (event, data) => {
+
+  try {
+    const sessionCookie = await session.defaultSession.cookies.get({url: 'http://localhost', name: 'session'});
+    const sessionCookieValue = JSON.parse(sessionCookie?.[0]?.value);
+    if(sessionCookieValue) {
+      const senderName = nomPc === sessionCookieValue.senderName ? sessionCookieValue.senderName :sessionCookieValue.receiverName;
+      const receiverName = nomPc !== sessionCookieValue.senderName ? sessionCookieValue.senderName :sessionCookieValue.receiverName;
+    ws.send(JSON.stringify({type: 'offer', data: {sdp: data?.sdp, senderName, receiverName }}));}
+  } catch (e) {
+    return undefined
+  }
 });
 
 ipcMain.on('answer', (event, data) => {
@@ -199,7 +221,6 @@ function handleConnexionDialog(receiverName, senderName) {
       title: "Demande de connexion",
       message: "Voulez-vous accepter la demande de connexion ?",
     }).then((result) => {
-      console.log("result : ", result)
       if (result.response === 0) {
         ws.send(
             JSON.stringify({
