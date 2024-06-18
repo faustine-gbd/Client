@@ -43,6 +43,7 @@ window.sessionAPI.onConnexionRequestResponse((value) => {
 })
 
 window.sessionAPI.onOfferReceived((offer) => {
+  console.log("offer : ", offer)
   peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
   peerConnection.createAnswer().then((answer) => {
     peerConnection.setLocalDescription(answer);
