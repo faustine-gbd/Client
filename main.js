@@ -50,7 +50,7 @@ app.whenReady().then(() => {
   let ipAddress = "";
   if (wiFiInterface) {
     const matchingInterface = wiFiInterface.find(
-      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.28"
+      (iface) => iface.family === "IPv4" && iface.address !== "192.168.1.35"
     );
     if (matchingInterface) {
       ipAddress = matchingInterface.address;
@@ -77,7 +77,7 @@ app.on("window-all-closed", () => {
 
 function sendIdentificationRequest(nomPc) {
   const options = {
-    hostname: "192.168.1.28",
+    hostname: "192.168.1.35",
     port: 8000,
     path: "/demande-identifiants",
     method: "POST",
@@ -94,7 +94,7 @@ function sendIdentificationRequest(nomPc) {
         console.log("ID reçu du serveur:", randomId);
         mainWindow.webContents.send("set-id", randomId);
         // Établir la connexion WebSocket avec le serveur
-        ws = new WebSocket(`ws://192.168.1.28:8081`);
+        ws = new WebSocket(`ws://192.168.1.35:8081`);
 
         ws.on("open", () => {
           ws.send(JSON.stringify({ type: "register", nomPc }));

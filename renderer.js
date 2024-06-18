@@ -42,6 +42,18 @@ window.sessionAPI.onConnexionRequestResponse((value) => {
   }
 })
 
+window.sessionAPI.onAnswerReceived((answer) => {
+  peerConnection.setRemoteDescription(new RTCSessionDescription(answer.data));
+});
+
+window.sessionAPI.onIceCandidateReceived((candidate) => {
+  peerConnection.addIceCandidate(new RTCIceCandidate(candidate.data));
+});
+
+window.sessionAPI.onControlReceived((data) => {
+  handleControl(data.data);
+});
+
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection();
 console.log("peerConnection : ", peerConnection)
