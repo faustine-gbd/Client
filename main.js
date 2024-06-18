@@ -175,7 +175,7 @@ ipcMain.on('offer', async (event, data) => {
     if(sessionCookieValue) {
       const senderName = nomPc === sessionCookieValue.senderName ? sessionCookieValue.senderName :sessionCookieValue.receiverName;
       const receiverName = nomPc !== sessionCookieValue.senderName ? sessionCookieValue.senderName :sessionCookieValue.receiverName;
-    ws.send(JSON.stringify({type: 'offer', data: {sdp: data?.sdp, senderName, receiverName }}));}
+    ws.send(JSON.stringify({type: 'offer', data: {sdp: data?.sdp, senderName, receiverName, remotePeerConnection:data?.peerConnection  }}));}
   } catch (e) {
     return undefined
   }
