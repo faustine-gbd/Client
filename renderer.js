@@ -43,7 +43,6 @@ window.sessionAPI.onConnexionRequestResponse((value) => {
 })
 
 window.sessionAPI.onOfferReceived((offer) => {
-  peerConnection = new RTCPeerConnection();
   peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
   peerConnection.createAnswer().then((answer) => {
     peerConnection.setLocalDescription(answer);
@@ -74,7 +73,8 @@ console.log("peerConnection : ", peerConnection)
 
   peerConnection.createOffer().then((offer) => {
     peerConnection.setLocalDescription(offer);
-    window.sessionAPI.sendOffer(offer);
+    const initialOfferAndConnection = { peerConnection, offer };
+    window.sessionAPI.sendOffer(initialOfferAndConnection);
   });
 }
 
