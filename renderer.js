@@ -42,6 +42,14 @@ window.sessionAPI.onConnexionRequestResponse((value) => {
   }
 })
 
+window.sessionAPI.onOfferReceived((offer) => {
+  peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  peerConnection.createAnswer().then((answer) => {
+    peerConnection.setLocalDescription(answer);
+    window.sessionAPI.sendAnswer(answer);
+  });
+});
+
 window.sessionAPI.onAnswerReceived((answer) => {
   peerConnection.setRemoteDescription(new RTCSessionDescription(answer.data));
 });
