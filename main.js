@@ -8,7 +8,6 @@ const WebSocket = require("ws");
 let mainWindow;
 let ws;
 let nomPc;
-//let peerConnection;
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
@@ -243,72 +242,3 @@ function handleConnexionRequestResponse(data){
     mainWindow.webContents.send("request-accepted", Boolean(requestAccepted));
   }
 }
-
-async function startScreenSharing(receiverName) {
-  peerConnection = new RTCPeerConnection();
-
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      ws.send(
-        JSON.stringify({
-          type: "iceCandidate",
-          candidate: event.candidate,
-          receiverName,
-        })
-      );
-    }
-  };
-
-  const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-  stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
-
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-
-  ws.send(
-    JSON.stringify({ type: "screenShareOffer", offer, senderName: "client1" })
-  );
-}
-
-async function handleScreenShareOffer(offer, senderName) {
-  peerConnection = new RTCPeerConnection();
-
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      ws.send(
-        JSON.stringify({
-          type: "iceCandidate",
-          candidate: event.candidate,
-          receiverName: senderName,
-        })
-      );
-    }
-  };
-
-  peerConnection.ontrack = (event) => {
-    const video = document.getElementById("remoteVideo");
-    video.srcObject = event.streams[0];
-  };
-
-  await peerConnection.setRemoteDescription(offer);
-
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-
-  ws.send(
-    JSON.stringify({
-      type: "screenShareAnswer",
-      answer,
-      receiverName: senderName,
-    })
-  );
-}
-
-async function handleScreenShareAnswer(answer) {
-  await peerConnection.setRemoteDescription(answer);
-}
-
-async function handleIceCandidate(candidate) {
-  await peerConnection.addIceCandidate(candidate);
-}
-
